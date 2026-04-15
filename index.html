@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>LIFE - Smart Todo App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            color: #f7ede1;
+            background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 22%),
+                        radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.06), transparent 18%),
+                        linear-gradient(180deg, #3e0202 0%, #120101 100%);
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: min(1120px, 100%);
+            margin: 0 auto;
+        }
+
+        .todo-app {
+            position: relative;
+            background: rgba(22, 10, 12, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 3rem;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        .todo-app::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(255, 117, 117, 0.18), transparent 55%);
+            filter: blur(32px);
+            pointer-events: none;
+        }
+
+        .todo-app::after {
+            content: '';
+            position: absolute;
+            bottom: -15%;
+            left: -15%;
+            width: 340px;
+            height: 340px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.16), transparent 50%);
+            filter: blur(28px);
+            pointer-events: none;
+        }
+
+        .app-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 1.5rem;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 2rem;
+        }
+
+        .app-header .title-block {
+            max-width: 640px;
+        }
+
+        .app-header h1 {
+            font-size: clamp(2.6rem, 4vw, 4rem);
+            line-height: 1;
+            letter-spacing: -0.06em;
+            color: #fff;
+            margin-bottom: 0.8rem;
+        }
+
+        .subtitle {
+            color: #e7d2c2;
+            font-size: 1rem;
+            line-height: 1.8;
+            max-width: 720px;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .welcome-message {
+            color: #f8e4d6;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 2;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 0.45rem 0.95rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            letter-spacing: 0.01em;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .input-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.8rem;
+            padding: 1.25rem;
+            border-radius: 2.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .todo-input,
+        .priority-select,
+        .due-date-input {
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: #f4e5d7;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .todo-input {
+            flex: 2;
+            min-width: 180px;
+            padding: 1rem 1.4rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .todo-input::placeholder {
+            color: rgba(247, 237, 225, 0.65);
+        }
+
+        .priority-select,
+        .due-date-input {
+            padding: 1rem 1.2rem;
+            min-width: 140px;
+            color: #f4e5d7;
+            appearance: none;
+        }
+
+        .todo-input:focus,
+        .priority-select:focus,
+        .due-date-input:focus {
+            border-color: rgba(249, 115, 22, 0.8);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+        }
+
+        .add-btn {
+            flex: 0 0 auto;
+            border: none;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: #fff;
+            padding: 1rem 1.8rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 18px 40px rgba(239, 68, 68, 0.24);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 22px 48px rgba(239, 68, 68, 0.3);
+        }
+
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.9rem;
+            margin-bottom: 1.8rem;
+            justify-content: flex-start;
+        }
+
+        .filter-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            color: #f3d7c3;
+            border-radius: 999px;
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            border-color: transparent;
+            color: #fff;
+            box-shadow: 0 16px 40px rgba(249, 115, 22, 0.2);
+        }
+
+        .filter-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem 0.75rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.72);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+            display: block;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .todo-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 1rem;
+            max-height: none;
+            overflow: visible;
+        }
+
+        .todo-item {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2rem;
+            padding: 1.1rem 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .todo-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+        }
+
+        .todo-check {
+            width: 1.4rem;
+            height: 1.4rem;
+            accent-color: #fb923c;
+            cursor: pointer;
+        }
+
+        .todo-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .todo-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.35rem;
+            word-break: break-word;
+        }
+
+        .todo-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.78rem;
+            color: #e8d4c6;
+        }
+
+        .priority-badge {
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            text-transform: capitalize;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffe3d3;
+        }
+
+        .priority-high {
+            background: rgba(248, 113, 113, 0.18);
+            color: #ffd3d1;
+        }
+
+        .priority-medium {
+            background: rgba(251, 191, 36, 0.18);
+            color: #fff0ce;
+        }
+
+        .priority-low {
+            background: rgba(34, 197, 94, 0.16);
+            color: #d8f4dc;
+        }
+
+        .due-date {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: #f8e4d2;
+        }
+
+        .overdue-badge {
+            background: #ff4d4d;
+            color: #fff;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.72rem;
+        }
+
+        .completed-task .todo-title {
+            color: rgba(255, 255, 255, 0.65);
+            text-decoration: line-through;
+        }
+
+        .delete-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: #ffb8a2;
+            padding: 0.65rem 0.85rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .delete-btn:hover {
+            background: #ff4d4d;
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .actions-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .clear-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #f5e8dd;
+            padding: 0.85rem 1.35rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            transition: background 0.2s ease, transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .task-count {
+            color: #f5e2d5;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: rgba(255, 255, 255, 0.72);
+            font-weight: 500;
+        }
+
+        @media (max-width: 860px) {
+            .todo-app {
+                padding: 1.5rem;
+            }
+
+            .app-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                align-items: flex-start;
+            }
+
+            .filter-section {
+                justify-content: flex-start;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+
+            .input-section {
+                flex-direction: column;
+            }
+
+            .todo-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at top left, rgba(255, 128, 128, 0.18), transparent 18%),
+                        radial-gradient(circle at bottom right, rgba(255, 210, 170, 0.12), transparent 22%),
+                        linear-gradient(180deg, #320303 0%, #120101 100%);
+            z-index: 1000;
+        }
+
+        .login-card {
+            width: min(420px, 92%);
+            background: rgba(18, 7, 9, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 3rem;
+            box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+            padding: 3rem 2.5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 3rem;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 90%);
+            pointer-events: none;
+        }
+
+        .login-title {
+            position: relative;
+            font-size: 2.8rem;
+            line-height: 1;
+            color: #ffd7b8;
+            margin-bottom: 0.6rem;
+            z-index: 1;
+        }
+
+        .login-subtitle {
+            position: relative;
+            color: #e7ccb9;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            z-index: 1;
+        }
+
+        .login-form {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 1.4rem;
+            z-index: 1;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 1rem 1.4rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: #faf1e6;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .name-input::placeholder {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .name-input:focus {
+            border-color: rgba(249, 115, 22, 0.8);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.12);
+        }
+
+        .login-btn {
+            border: none;
+            padding: 1rem 1.8rem;
+            border-radius: 2rem;
+            background: linear-gradient(135deg, #f97316, #ef4444);
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 18px 40px rgba(239, 68, 68, 0.22);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 22px 48px rgba(239, 68, 68, 0.28);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+<div id="loginContainer" class="login-container">
+    <div class="login-card">
+        <h1 class="login-title">Welcome to LIFE</h1>
+        <p class="login-subtitle">Your smart todo companion</p>
+        <form class="login-form" id="loginForm">
+            <input type="text" id="nameInput" class="name-input" placeholder="Enter your name" maxlength="50" required>
+            <button type="submit" class="login-btn" id="loginBtn">Get Started</button>
+        </form>
+    </div>
+</div>
+
+<div class="container" id="mainContainer" style="display: none;">
+    <div class="todo-app">
+        <div class="app-header">
+            <div class="title-block">
+                <h1>📋 LIFE ToDo</h1>
+                <p class="subtitle">Stay organized and productive — smart priorities & due dates</p>
+            </div>
+            <div class="header-actions">
+                <p class="welcome-message" id="welcomeMessage"></p>
+            </div>
+        </div>
+
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+
+        <div class="input-section">
+            <input type="text" id="todoInput" placeholder="Write a new task..." class="todo-input">
+            <select id="prioritySelect" class="priority-select">
+                <option value="low">🟢 Low</option>
+                <option value="medium" selected="selected">🟠 Medium</option>
+                <option value="high">🔴 High</option>
+            </select>
+            <input type="date" id="dueDateInput" class="due-date-input">
+            <button id="addBtn" class="add-btn">+ Add</button>
+        </div>
+
+        <div class="filter-section">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+            <button class="filter-btn" data-filter="overdue">Overdue</button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Active</span>
+                <span class="stat-value" id="activeStat">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Completed</span>
+                <span class="stat-value" id="completedStat">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Overdue</span>
+                <span class="stat-value" id="overdueStat">0</span>
+            </div>
+        </div>
+
+        <ul id="todoList" class="todo-list"></ul>
+
+        <div class="actions-bar">
+            <button id="clearBtn" class="clear-btn">🗑️ Clear Completed</button>
+            <span id="taskCount" class="task-count">0 tasks</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- STORAGE KEYS ----------
+        const STORAGE_KEY = 'taskmaster_todos';
+        const USER_NAME_KEY = 'taskmaster_username';
+
+        // ---------- GLOBAL STATE ----------
+        let todos = [];          // each todo: { id, text, priority, dueDate, completed, createdAt }
+        let currentFilter = 'all';   // 'all', 'active', 'completed', 'overdue'
+        let currentUser = null;  // user's name
+
+        // DOM elements
+        const loginContainer = document.getElementById('loginContainer');
+        const mainContainer = document.getElementById('mainContainer');
+        const loginForm = document.getElementById('loginForm');
+        const nameInput = document.getElementById('nameInput');
+        const loginBtn = document.getElementById('loginBtn');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const todoInput = document.getElementById('todoInput');
+        const prioritySelect = document.getElementById('prioritySelect');
+        const dueDateInput = document.getElementById('dueDateInput');
+        const addBtn = document.getElementById('addBtn');
+        const todoListEl = document.getElementById('todoList');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const activeStatSpan = document.getElementById('activeStat');
+        const completedStatSpan = document.getElementById('completedStat');
+        const overdueStatSpan = document.getElementById('overdueStat');
+        const taskCountSpan = document.getElementById('taskCount');
+        const clearCompletedBtn = document.getElementById('clearBtn');
+
+        // ---------- LOGIN/LOGOUT FUNCTIONS ----------
+        function loginUser(name) {
+            if (!name || name.trim().length === 0) {
+                nameInput.style.borderColor = '#ef4444';
+                nameInput.placeholder = 'Please enter your name!';
+                setTimeout(() => {
+                    nameInput.style.borderColor = '#e2e8f0';
+                    nameInput.placeholder = 'Enter your name';
+                }, 1500);
+                return;
+            }
+            currentUser = name.trim();
+            localStorage.setItem(USER_NAME_KEY, currentUser);
+            nameInput.value = '';
+            showMainApp();
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem(USER_NAME_KEY);
+            showLogin();
+        }
+
+        function showLogin() {
+            loginContainer.style.display = 'flex';
+            mainContainer.style.display = 'none';
+            nameInput.focus();
+        }
+
+        function showMainApp() {
+            loginContainer.style.display = 'none';
+            mainContainer.style.display = 'block';
+            welcomeMessage.textContent = `Welcome, ${currentUser}!`;
+            loadTodos();
+            renderTodoList();
+        }
+
+        function checkExistingUser() {
+            const storedName = localStorage.getItem(USER_NAME_KEY);
+            if (storedName && storedName.trim()) {
+                currentUser = storedName.trim();
+                showMainApp();
+            } else {
+                showLogin();
+            }
+        }
+
+        // Helper: Get today's date in YYYY-MM-DD (local timezone)
+        function getTodayDate() {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Check if a task is overdue (not completed and dueDate < today)
+        function isOverdue(todo) {
+            if (todo.completed) return false;
+            if (!todo.dueDate) return false;
+            const todayStr = getTodayDate();
+            return todo.dueDate < todayStr;
+        }
+
+        // Update stats: active (incomplete & not overdue), completed, overdue (incomplete + overdue)
+        function computeStats() {
+            let activeCount = 0;
+            let completedCount = 0;
+            let overdueCount = 0;
+            for (const t of todos) {
+                if (t.completed) {
+                    completedCount++;
+                } else {
+                    const overdueFlag = isOverdue(t);
+                    if (overdueFlag) {
+                        overdueCount++;
+                    } else {
+                        activeCount++;
+                    }
+                }
+            }
+            return { activeCount, completedCount, overdueCount };
+        }
+
+        // Refresh stats UI
+        function updateStatsUI() {
+            const stats = computeStats();
+            activeStatSpan.innerText = stats.activeCount;
+            completedStatSpan.innerText = stats.completedCount;
+            overdueStatSpan.innerText = stats.overdueCount;
+            const total = todos.length;
+            taskCountSpan.innerText = `${total} task${total !== 1 ? 's' : ''}`;
+        }
+
+        // Filter todos based on currentFilter
+        function getFilteredTodos() {
+            if (currentFilter === 'all') return [...todos];
+            if (currentFilter === 'active') {
+                return todos.filter(t => !t.completed && !isOverdue(t));
+            }
+            if (currentFilter === 'completed') {
+                return todos.filter(t => t.completed === true);
+            }
+            if (currentFilter === 'overdue') {
+                return todos.filter(t => !t.completed && isOverdue(t));
+            }
+            return [...todos];
+        }
+
+        // Render list with current filter
+        function renderTodoList() {
+            if (!todoListEl) return;
+            const filtered = getFilteredTodos();
+            if (filtered.length === 0) {
+                let emptyMsg = '';
+                if (currentFilter === 'all') emptyMsg = '✨ No tasks yet. Add your first task! ✨';
+                else if (currentFilter === 'active') emptyMsg = '🏆 No active tasks. Great focus!';
+                else if (currentFilter === 'completed') emptyMsg = '✅ No completed tasks yet. Finish some!';
+                else if (currentFilter === 'overdue') emptyMsg = '⏰ No overdue tasks — you\'re on track!';
+                todoListEl.innerHTML = `<div class="empty-message">${emptyMsg}</div>`;
+                updateStatsUI();
+                return;
+            }
+
+            // Sort filtered: priority high > medium > low, then dueDate ascending (soonest first), then creation date fallback
+            const priorityWeight = { 'high': 3, 'medium': 2, 'low': 1 };
+            const sorted = [...filtered].sort((a, b) => {
+                // 1) Overdue tasks appear first for active views? but general sorting: priority higher comes first, then due soon
+                // but for better UX: high priority on top, then dueDate
+                if (priorityWeight[a.priority] !== priorityWeight[b.priority]) {
+                    return priorityWeight[b.priority] - priorityWeight[a.priority];
+                }
+                if (a.dueDate && b.dueDate) {
+                    return a.dueDate.localeCompare(b.dueDate);
+                }
+                if (a.dueDate && !b.dueDate) return -1;
+                if (!a.dueDate && b.dueDate) return 1;
+                return b.createdAt - a.createdAt;
+            });
+
+            let html = '';
+            for (const todo of sorted) {
+                const isTaskOverdue = !todo.completed && isOverdue(todo);
+                const completedClass = todo.completed ? 'completed-task' : '';
+                const priorityClass = `priority-${todo.priority}`;
+                const dueDateStr = todo.dueDate ? todo.dueDate : '';
+                let dueHtml = '';
+                if (dueDateStr) {
+                    const displayDate = new Date(dueDateStr).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    dueHtml = `<span class="due-date">📅 ${displayDate}</span>`;
+                }
+                let overdueBadge = '';
+                if (isTaskOverdue) {
+                    overdueBadge = `<span class="overdue-badge">⚠️ Overdue</span>`;
+                }
+
+                html += `
+                    <li class="todo-item ${completedClass}" data-id="${todo.id}">
+                        <input type="checkbox" class="todo-check" ${todo.completed ? 'checked' : ''}>
+                        <div class="todo-content">
+                            <div class="todo-title">${escapeHtml(todo.text)}</div>
+                            <div class="todo-meta">
+                                <span class="priority-badge ${priorityClass}">${capitalize(todo.priority)}</span>
+                                ${dueHtml}
+                                ${overdueBadge}
+                            </div>
+                        </div>
+                        <button class="delete-btn" aria-label="Delete task">🗑️</button>
+                    </li>
+                `;
+            }
+            todoListEl.innerHTML = html;
+            updateStatsUI();
+        }
+
+        // Simple helpers
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
+        }
+
+        function capitalize(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+        }
+
+        // Load initial data
+        function loadTodos() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed)) {
+                        todos = parsed;
+                        // Ensure every task has createdAt (for older entries)
+                        for (let t of todos) {
+                            if (!t.createdAt) t.createdAt = Date.now();
+                            if (!t.priority) t.priority = 'medium';
+                        }
+                    }
+                } catch(e) { console.warn(e); }
+            }
+            renderTodoList();
+        }
+
+        // Add new todo
+        function addTodo() {
+            let text = todoInput.value.trim();
+            if (text === '') {
+                todoInput.placeholder = '✏️ Please enter a task!';
+                todoInput.style.borderColor = '#ef4444';
+                setTimeout(() => {
+                    todoInput.style.borderColor = '#e2e8f0';
+                    todoInput.placeholder = 'Add a new task...';
+                }, 1500);
+                return;
+            }
+            const priority = prioritySelect.value;
+            let dueDate = dueDateInput.value;
+            if (dueDate === '') dueDate = null;
+            const newTodo = {
+                id: Date.now(),
+                text: text,
+                priority: priority,
+                dueDate: dueDate,
+                completed: false,
+                createdAt: Date.now(),
+            };
+            todos.push(newTodo);
+            todoInput.value = '';
+            dueDateInput.value = '';
+            prioritySelect.value = 'medium';
+            saveToLocalStorage();
+            renderTodoList();
+            // subtle smooth scroll to bottom
+            if (todoListEl) todoListEl.scrollTop = todoListEl.scrollHeight;
+        }
+
+        // Delete todo by id
+        function deleteTodoById(id) {
+            todos = todos.filter(t => t.id !== id);
+            saveToLocalStorage();
+            renderTodoList();
+        }
+
+        // Toggle completed
+        function toggleComplete(id, checked) {
+            const todo = todos.find(t => t.id === id);
+            if (todo) {
+                todo.completed = checked;
+                saveToLocalStorage();
+                renderTodoList();
+            }
+        }
+
+        // Clear all completed tasks
+        function clearCompletedTasks() {
+            const newTodos = todos.filter(t => !t.completed);
+            if (newTodos.length === todos.length) return;
+            todos = newTodos;
+            saveToLocalStorage();
+            renderTodoList();
+        }
+
+        // Event listeners (delegation)
+        function setupEventDelegation() {
+            todoListEl.addEventListener('click', (e) => {
+                // delete button
+                const deleteBtn = e.target.closest('.delete-btn');
+                if (deleteBtn) {
+                    const li = deleteBtn.closest('.todo-item');
+                    if (li && li.dataset.id) {
+                        const id = parseInt(li.dataset.id);
+                        deleteTodoById(id);
+                    }
+                    return;
+                }
+                // checkbox toggle
+                const checkbox = e.target.closest('.todo-check');
+                if (checkbox) {
+                    const li = checkbox.closest('.todo-item');
+                    if (li && li.dataset.id) {
+                        const id = parseInt(li.dataset.id);
+                        toggleComplete(id, checkbox.checked);
+                    }
+                }
+            });
+        }
+
+        // Filter buttons behavior
+        function initFilters() {
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const filterValue = btn.getAttribute('data-filter');
+                    if (!filterValue) return;
+                    currentFilter = filterValue;
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderTodoList();
+                });
+            });
+        }
+
+        // Keyboard shortcuts: Enter key add task
+        function initKeyboardShortcuts() {
+            todoInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTodo();
+                }
+            });
+            dueDateInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTodo();
+            });
+        }
+
+        // Real-time overdue update: whenever we render, stats get updated. But for dynamic date change across midnight?
+        // We can optionally re-render every minute to keep overdue badges fresh.
+        function startAutoOverdueRefresh() {
+            setInterval(() => {
+                // re-render only if there are any tasks that might become overdue
+                const hasActive = todos.some(t => !t.completed);
+                if (hasActive || true) {
+                    renderTodoList(); // re-evaluates overdue status
+                }
+            }, 60000); // every minute
+        }
+
+        // initialize app
+        function init() {
+            checkExistingUser();
+            setupEventDelegation();
+            initFilters();
+            initKeyboardShortcuts();
+            addBtn.addEventListener('click', addTodo);
+            clearCompletedBtn.addEventListener('click', clearCompletedTasks);
+            logoutBtn.addEventListener('click', logoutUser);
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = nameInput.value.trim();
+                if (name) {
+                    loginUser(name);
+                }
+            });
+            startAutoOverdueRefresh();
+            // Set default dueDate placeholder behavior (optional but nice)
+            if (dueDateInput) {
+                dueDateInput.placeholder = 'Due date (optional)';
+            }
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>
